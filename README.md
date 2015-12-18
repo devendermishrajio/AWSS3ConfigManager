@@ -1,2 +1,3 @@
 # AWSS3ConfigManager
-This repository is responsible for managing configuration through S3
+This repository is responsible for managing configuration files on nodes through AWS S3.
+IT PERIODICALLY COMPARES CONFIGURATION FILES STORED ON NODES WITH THEIR COUNTERPARTS STORED IN AWS S3 AND SENDS ALERTS AS EMAIL IF ANY CHANGE IS DETERMINED. 
