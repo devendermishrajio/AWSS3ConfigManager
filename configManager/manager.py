@@ -6,7 +6,7 @@ import configReader
 import logging, os
 
 logger = logging.getLogger("s3Integration")
-logger.addHandler(logging.FileHandler("/tmp/s3Integration.log"))
+logger.addHandler(logging.FileHandler("/var/log/s3Integration.log"))
 
 class ConfigManager:
 
@@ -25,15 +25,22 @@ class ConfigManager:
     try:
       self.configReader = configReader.ConfigReader(config_file)#("/tmp/Config_Manager_config.conf")
       self.S3_BUCKET = self.configReader.getValue(self.SECTION, self.BUCKET) 
+      self.conf_dir = self.configReader.getValue(self.SECTION, self.CONF_DIR)
+      print "Bucket initialized with :", self.S3_BUCKET
     except Exception:
+      print "Invalid config file"
       logger.error("Invalid config file")
     self.s3Dao = s3Dao.S3Dao()
     self.s3Dao.setBucket(self.S3_BUCKET)
+    print "S3 Dao Initialized"
 
   def reportAllConfigChange(self):
+    print "Inside reportAllConfigChange"
     objects = self.getAllS3Objects()
+    print "S3 objects : ", objects
     for obj in objects:
       if not obj.endswith("/"):
+        print "Processing Object : ", obj
         self.reportOrApplyConfigChange(obj)      
 
   def reportOrApplyConfigChange(self, objectKey, apply_flag = False):
@@ -59,6 +66,7 @@ class ConfigManager:
         if apply_flag:
           self.applyChange(newConfig, OLD_CONFIG_NODE, OLD_CONFIG_PATH)
         else:
+          print "diff computed"
           '''call mail server to send notification with diff files and objectKey and old config node and path.'''
           self.notifyConfigChange(objectKey, config_diff)
     except OSError as error:
@@ -66,6 +74,7 @@ class ConfigManager:
       pass
 
   def getAllS3Objects(self):
+    print "Inside getAllS3Objects"
     return self.s3Dao.getAllObjects()
 
   def getS3Object(self, objectKey, newConfig):
@@ -87,7 +96,7 @@ class ConfigManager:
     #return helper.Helper.copyConfigFromRemote(node, src_path, dest_path)
     
   def applyChange(self, newConfig, node, path):
-    configChangeNotifier.ConfigChangeApplier(newConfig, node, path).copyConfigToRemote()
+    configChangeNotifier.ConfigChangeApplier(newConfig, self.conf_dir, path)
 
   def notifyConfigChange(self, objectKey, ConfigDiff):
     server = self.configReader.getValue(self.SECTION, self.MAIL_SERVER)
